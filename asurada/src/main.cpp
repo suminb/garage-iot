@@ -212,7 +212,7 @@ typedef enum
   THROTTLE
 } obd_pid_states;
 obd_pid_states obd_state = ENG_RPM;
-Model model;
+Model model(12);
 uint32_t last_time, now = 0;            // RTC
 const uint32_t refresh_threshold = 100; // in milliseconds
 
@@ -233,19 +233,32 @@ void refresh_view()
   tft.printf("%5.0f%%", model.get_throttle());
 }
 
+const uint32_t wait_for_response = 5;
 void update_model()
 {
+  uint32_t now = millis();
+  if (!model.should_update())
+  {
+    delay(10);
+    return;
+  }
+
+  // TODO: Generalize this code; perhaps with function pointers?
   switch (obd_state)
   {
   case ENG_RPM:
   {
     float rpm = elm327.rpm();
 
+    while (elm327.nb_rx_state == ELM_GETTING_MSG) {
+      delay(wait_for_response);
+      rpm = elm327.rpm();
+    }
     if (elm327.nb_rx_state == ELM_SUCCESS)
     {
       model.set_rpm((int)rpm);
     }
-    else if (elm327.nb_rx_state != ELM_GETTING_MSG)
+    else
     {
       elm327.printError();
     }
@@ -255,12 +268,15 @@ void update_model()
   case SPEED:
   {
     int kph = elm327.kph();
-
+    while (elm327.nb_rx_state == ELM_GETTING_MSG) {
+      delay(wait_for_response);
+      kph = elm327.kph();
+    }
     if (elm327.nb_rx_state == ELM_SUCCESS)
     {
       model.set_kph(kph);
     }
-    else if (elm327.nb_rx_state != ELM_GETTING_MSG)
+    else
     {
       elm327.printError();
     }
@@ -270,30 +286,38 @@ void update_model()
   case OIL_TEMP:
   {
     float oil_temp = elm327.oilTemp();
-
+    while (elm327.nb_rx_state == ELM_GETTING_MSG) {
+      delay(wait_for_response);
+      oil_temp = elm327.oilTemp();
+    }
     if (elm327.nb_rx_state == ELM_SUCCESS)
     {
       model.set_oil_temp(oil_temp);
     }
-    else if (elm327.nb_rx_state != ELM_GETTING_MSG)
+    else
     {
       elm327.printError();
     }
     obd_state = THROTTLE;
+    break;
   }
   case THROTTLE:
   {
     float throttle = elm327.throttle();
-
+    while (elm327.nb_rx_state == ELM_GETTING_MSG) {
+      delay(wait_for_response);
+      throttle = elm327.throttle();
+    }
     if (elm327.nb_rx_state == ELM_SUCCESS)
     {
       model.set_throttle(throttle);
     }
-    else if (elm327.nb_rx_state != ELM_GETTING_MSG)
+    else
     {
       elm327.printError();
     }
     obd_state = ENG_RPM;
+    break;
   }
   default:
     Serial.println("Unknown OBD state");
