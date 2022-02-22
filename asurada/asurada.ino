@@ -13,9 +13,11 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 void setup()
 {
     Serial.begin(9600);
-    while (!Serial)
+
+    // Wait for serial for a finite amount of time
+    for (int i = 0; !Serial && i < 10; i++)
     {
-        yield();
+        delay(10);
     }
     Serial.println("Booting up...");
 
