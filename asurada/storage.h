@@ -1,5 +1,6 @@
 #include <SdFat.h>
 #include <sdios.h>
+#include "display.h"
 
 #define SD_FAT_TYPE 2
 #define SD_CS_PIN 10
@@ -31,3 +32,5 @@ typedef FsFile file_t;
 #else // SD_FAT_TYPE
 #error Invalid SD_FAT_TYPE
 #endif // SD_FAT_TYPE
+
+void initSD(Stream &sout, LiquidCrystal_I2C &lcd, sd_t &sd, file_t &file);
