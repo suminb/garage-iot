@@ -1,22 +1,14 @@
 #include <stdarg.h>
 #include <Wire.h>
-#include <LiquidCrystal_I2C.h>
 #include <Adafruit_MLX90614.h>
 #include "storage.h"
+#include "display.h"
 
-LiquidCrystal_I2C lcd(0x27, 16, 2);
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
 
 sd_t sd;
 file_t file;
-
-void log(const char *shortMessage, const char *longMessage)
-{
-    Serial.println(longMessage);
-
-    lcd.setCursor(0, 0);
-    lcd.print(shortMessage);
-}
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 void setup()
 {
@@ -30,32 +22,18 @@ void setup()
     lcd.init();
     lcd.backlight();
 
-    Serial.println("Initializing temp. sensor...");
+    Serial.println("Initializing temperature sensor...");
     if (!mlx.begin())
     {
         Serial.println("Failed to start temperature sensor");
     }
-    initSD();
+    initSD(Serial, lcd, sd, file);
 
     lcd.clear();
     if (!file)
     {
         lcd.setCursor(15, 0);
         lcd.print("S");
-    }
-}
-
-void initSD()
-{
-    Serial.println("Initializing SD...");
-    if (!sd.begin(SD_CONFIG))
-    {
-        log("SD error (1)", "sd.begin() failed");
-        // sd.initErrorHalt(&Serial);
-    }
-    if (!file.open("data.csv", FILE_WRITE))
-    {
-        Serial.println("Could not open data.csv");
     }
 }
 
