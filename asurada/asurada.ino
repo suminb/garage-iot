@@ -36,6 +36,13 @@ void setup()
         Serial.println("Failed to start temperature sensor");
     }
     initSD();
+
+    lcd.clear();
+    if (!file)
+    {
+        lcd.setCursor(15, 0);
+        lcd.print("S");
+    }
 }
 
 void initSD()
