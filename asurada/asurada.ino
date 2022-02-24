@@ -5,6 +5,7 @@
 #include "display.h"
 
 Adafruit_MLX90614 mlx = Adafruit_MLX90614();
+bool mlx_available = false;
 
 sd_t sd;
 file_t file;
@@ -25,25 +26,36 @@ void setup()
     lcd.backlight();
 
     Serial.println("Initializing temperature sensor...");
-    if (!mlx.begin())
+    if (mlx.begin())
+    {
+        mlx_available = true;
+    }
+    else
     {
         Serial.println("Failed to start temperature sensor");
     }
     initSD(Serial, lcd, sd, file);
 
     lcd.clear();
-    if (!file)
-    {
-        lcd.setCursor(15, 0);
-        lcd.print("S");
-    }
 }
+
+// NOTE: Avoid allocating this inside the loop, otherwise we may run into OOM issues
+char temp[8];
+char line1[17];
+char line2[17];
 
 void loop()
 {
-    char temp[8];
-    char line1[17];
-    char line2[17];
+    if (!mlx_available)
+    {
+        lcd.setCursor(15, 0);
+        lcd.print("T");
+    }
+    if (!file)
+    {
+        lcd.setCursor(15, 1);
+        lcd.print("S");
+    }
 
     double ambTemp = mlx.readAmbientTempC();
     double objTemp = mlx.readObjectTempC();
@@ -51,7 +63,6 @@ void loop()
     if (isnan(ambTemp) || isnan(objTemp))
     {
         Serial.println("Temperature is read as NaN");
-        return;
     }
 
     dtostrf(ambTemp, 5, 1, temp);
@@ -75,7 +86,7 @@ void loop()
     lcd.setCursor(0, 1);
     lcd.print(line2);
 
-    delay(100);
+    delay(200);
 }
 
 void writeRecord(file_t *fout, double ambTemp, double objTemp)
