@@ -14,7 +14,7 @@ DHT dht(DHTPIN, DHTTYPE);
 // current temperature & humidity, updated in loop()
 float t = 0.0;
 float h = 0.0;
-
+float d = 0.0;
 
 const char *ssid = "FBI Undercover Van";
 const char *password = "";
@@ -45,7 +45,7 @@ const char index_html[] PROGMEM = R"rawliteral(
   </style>
 </head>
 <body>
-  <h2>ESP8266 DHT Server</h2>
+  <h2>Air Quality Monitoring</h2>
   <p>
     <i class="fas fa-thermometer-half" style="color:#059e8a;"></i> 
     <span class="dht-labels">Temperature</span> 
@@ -56,7 +56,13 @@ const char index_html[] PROGMEM = R"rawliteral(
     <i class="fas fa-tint" style="color:#00add6;"></i> 
     <span class="dht-labels">Humidity</span>
     <span id="humidity">%HUMIDITY%</span>
-    <sup class="units">%</sup>
+    <sup class="units">&percnt;</sup>
+  </p>
+  <p>
+    <i class="fa-solid fa-face-weary"></i>
+    <span class="dht-labels">Dust Density</span>
+    <span id="dust">%DUST%</span>
+    <sup class="units"></sup>
   </p>
 </body>
 <script>
@@ -81,6 +87,17 @@ setInterval(function ( ) {
   xhttp.open("GET", "/humidity", true);
   xhttp.send();
 }, 10000 ) ;
+
+setInterval(function ( ) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      document.getElementById("dust").innerHTML = this.responseText;
+    }
+  };
+  xhttp.open("GET", "/dust", true);
+  xhttp.send();
+}, 10000 ) ;
 </script>
 </html>)rawliteral";
 
@@ -95,6 +112,10 @@ String processor(const String &var)
     else if (var == "HUMIDITY")
     {
         return String(h);
+    }
+    else if (var == "DUST")
+    {
+        return String(d);
     }
     return String();
 }
@@ -131,6 +152,8 @@ void setup()
               { request->send_P(200, "text/plain", String(t).c_str()); });
     server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest *request)
               { request->send_P(200, "text/plain", String(h).c_str()); });
+    server.on("/dust", HTTP_GET, [](AsyncWebServerRequest *request)
+              { request->send_P(200, "text/plain", String(d).c_str()); });
 
     // Start server
     server.begin();
@@ -146,8 +169,8 @@ void loop()
     // Read temperature as Celsius (the default)
     t = dht.readTemperature();
 
-    float d = dustSensor.getDustDensity();
-    read_dust_density();
+    // float d = dustSensor.getDustDensity();
+    d = read_dust_density();
 
     digitalWrite(LED, HIGH);
 
