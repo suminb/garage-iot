@@ -28,17 +28,21 @@ void setup()
     Serial.println("Getting started...");
 
     init_display();
+    display.clearDisplay();
     display_text("Booting up...");
-
-    display.setTextSize(2);
-    display.setTextColor(SSD1306_WHITE);
 
     dht.begin();
     dustSensor.begin();
     pinMode(LED, OUTPUT);
 
+    display_text("Initializing WiFi...");
     init_wifi();
+
+    display_text("Initializing web server...");
     init_web_server();
+
+    display.setTextSize(2);
+    display.setTextColor(SSD1306_WHITE);
 }
 
 void loop()
@@ -66,11 +70,11 @@ void loop()
     Serial.println(d);
 
     display.clearDisplay();
-    display.setCursor(0, 0);
+    display.setCursor(1, 1);
 
-    sprintf(text, "%.1fC", t);
+    sprintf(text, "%.1fC %.0f%%", t, h);
     display.println(text);
-    sprintf(text, "%.1f%%", h);
+    sprintf(text, "%.1f", d);
     display.println(text);
     display.display();
 

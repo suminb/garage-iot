@@ -13,7 +13,7 @@ const char index_html[] PROGMEM = R"rawliteral(
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
   <style>
     html {
-     font-family: Arial;
+     font-family: Helvetica, sans-serif;
      display: inline-block;
      margin: 0px auto;
      text-align: center;
@@ -50,38 +50,21 @@ const char index_html[] PROGMEM = R"rawliteral(
   </p>
 </body>
 <script>
-setInterval(function ( ) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
+setInterval(function () {
+  var req = new XMLHttpRequest();
+  req.responseType = "json";
+  req.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("temperature").innerHTML = this.responseText;
+      var resp = req.response;
+      document.getElementById("temperature").innerHTML = resp.temperature.toFixed(1);
+      document.getElementById("humidity").innerHTML = resp.humidity.toFixed(0);
+      document.getElementById("dust_density").innerHTML = resp.dust_density.toFixed(1);
     }
   };
-  xhttp.open("GET", "/temperature", true);
-  xhttp.send();
-}, 10000 ) ;
+  req.open("GET", "/data", true);
+  req.send();
+}, 10000);
 
-setInterval(function ( ) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("humidity").innerHTML = this.responseText;
-    }
-  };
-  xhttp.open("GET", "/humidity", true);
-  xhttp.send();
-}, 10000 ) ;
-
-setInterval(function ( ) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
-    if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("dust").innerHTML = this.responseText;
-    }
-  };
-  xhttp.open("GET", "/dust", true);
-  xhttp.send();
-}, 10000 ) ;
 </script>
 </html>)rawliteral";
 

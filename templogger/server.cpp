@@ -26,6 +26,7 @@ String processor(const String &var)
     return String();
 }
 
+char json_content[128];
 
 void init_web_server()
 {
@@ -33,14 +34,14 @@ void init_web_server()
     Serial.println(WiFi.localIP());
 
     // Route for root / web page
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send_P(200, "text/html", index_html, processor); });
-    server.on("/temperature", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send_P(200, "text/plain", String(t).c_str()); });
-    server.on("/humidity", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send_P(200, "text/plain", String(h).c_str()); });
-    server.on("/dust", HTTP_GET, [](AsyncWebServerRequest *request)
-              { request->send_P(200, "text/plain", String(d).c_str()); });
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send_P(200, "text/html", index_html, processor);
+    });
+
+    server.on("/data", HTTP_GET, [](AsyncWebServerRequest *request) {
+        sprintf(json_content, "{\"ip\":\"%s\", \"temperature\":%f, \"humidity\":%f, \"dust_density\":%f}", WiFi.localIP().toString().c_str(), t, h, d);
+        request->send_P(200, "application/json", json_content);
+    });
 
     // Start server
     server.begin();
