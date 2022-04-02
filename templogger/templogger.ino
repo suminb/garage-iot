@@ -1,8 +1,9 @@
 #include <Wire.h>
 #include <DHT.h>
-#include <ESP8266WiFi.h>
+#include "wifi.h"
 #include "server.h"
 #include "dust.h"
+#include "display.h"
 
 #define LED 2
 
@@ -15,10 +16,7 @@ float t = 0.0;
 float h = 0.0;
 float d = 0.0;
 
-const char *ssid = "FBI Undercover Van";
-const char *password = "";
-
-
+char text[64];
 
 void setup()
 {
@@ -28,20 +26,18 @@ void setup()
         delay(100);
     }
     Serial.println("Getting started...");
+
+    init_display();
+    display_text("Booting up...");
+
+    display.setTextSize(2);
+    display.setTextColor(SSD1306_WHITE);
+
     dht.begin();
     dustSensor.begin();
     pinMode(LED, OUTPUT);
 
-    // Connect to Wi-Fi
-    WiFi.begin(ssid, password);
-    Serial.println("Connecting to WiFi");
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(250);
-        Serial.print(".");
-    }
-    Serial.println();
-
+    init_wifi();
     init_web_server();
 }
 
@@ -68,6 +64,15 @@ void loop()
 
     Serial.print(F("Dust density: "));
     Serial.println(d);
+
+    display.clearDisplay();
+    display.setCursor(0, 0);
+
+    sprintf(text, "%.1fC", t);
+    display.println(text);
+    sprintf(text, "%.1f%%", h);
+    display.println(text);
+    display.display();
 
     delay(1000);
 }
