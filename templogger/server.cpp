@@ -39,10 +39,29 @@ void init_web_server()
     });
 
     server.on("/data", HTTP_GET, [](AsyncWebServerRequest *request) {
-        sprintf(json_content, "{\"ip\":\"%s\", \"temperature\":%f, \"humidity\":%f, \"dust_density\":%f}", WiFi.localIP().toString().c_str(), t, h, d);
-        request->send_P(200, "application/json", json_content);
+        request->send_P(200, "application/json", build_response_body().c_str());
     });
 
     // Start server
     server.begin();
+}
+
+String encode_float(float value) {
+    if (isnan(value)) {
+        return String("null");
+    }
+    else {
+        return String(value);
+    }
+}
+
+String build_response_body() {
+    char json_content[128];
+    sprintf(json_content,
+        "{\"ip\":\"%s\", \"temperature\":%s, \"humidity\":%s, \"dust_density\":%s}",
+        WiFi.localIP().toString().c_str(),
+        encode_float(t).c_str(),
+        encode_float(h).c_str(),
+        encode_float(d).c_str());
+    return String(json_content);
 }

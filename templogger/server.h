@@ -70,5 +70,6 @@ setInterval(function () {
 
 void init_web_server();
 String processor(const String &var);
+String build_response_body();
 
 #endif // __SERVER_H__

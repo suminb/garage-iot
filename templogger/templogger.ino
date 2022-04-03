@@ -4,6 +4,7 @@
 #include "server.h"
 #include "dust.h"
 #include "display.h"
+#include <ESP8266HTTPClient.h>
 
 #define LED 2
 
@@ -77,6 +78,21 @@ void loop()
     sprintf(text, "%.1f", d);
     display.println(text);
     display.display();
+
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        WiFiClient client;
+        HTTPClient http;
+
+        http.begin(client, "http://192.168.1.39:8077");
+        http.addHeader("Content-Type", "application/json");
+        int httpResponseCode = http.POST(build_response_body());
+
+        Serial.print("HTTP Response code: ");
+        Serial.println(httpResponseCode);
+
+        http.end();
+    }
 
     delay(1000);
 }
