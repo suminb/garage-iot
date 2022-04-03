@@ -7,7 +7,7 @@
 
 #define LED 2
 
-#define DHTPIN 5
+#define DHTPIN 14 // D5
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
