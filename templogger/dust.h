@@ -3,8 +3,8 @@
 // Sharp dust sensor
 // https://github.com/luciansabo/GP2YDustSensor
 // Adafruit Unified Sensor library is required
-const uint8_t SHARP_LED_PIN = 14; // Sharp Dust/particle sensor Led Pin
-const uint8_t SHARP_VO_PIN = A0;   // Sharp Dust/particle analog out pin used for reading
+const uint8_t SHARP_LED_PIN = 12; // (D6) Sharp Dust/particle sensor Led Pin
+const uint8_t SHARP_VO_PIN = A0;  // Sharp Dust/particle analog out pin used for reading
 GP2YDustSensor dustSensor(GP2YDustSensorType::GP2Y1014AU0F, SHARP_LED_PIN, SHARP_VO_PIN);
 
 float read_dust_density()

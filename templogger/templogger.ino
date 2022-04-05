@@ -9,7 +9,7 @@
 #define LED 2
 
 #define DHTPIN 14 // D5
-#define DHTTYPE DHT11
+#define DHTTYPE DHT22
 DHT dht(DHTPIN, DHTTYPE);
 
 // current temperature & humidity, updated in loop()
