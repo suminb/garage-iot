@@ -48,7 +48,7 @@ void setup()
 
 void loop()
 {
-    digitalWrite(LED, LOW);
+    // digitalWrite(LED, LOW);
 
     // Reading temperature or humidity takes about 250 milliseconds!
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
@@ -56,10 +56,10 @@ void loop()
     // Read temperature as Celsius (the default)
     t = dht.readTemperature();
 
-    // float d = dustSensor.getDustDensity();
-    d = read_dust_density();
+    d = dustSensor.getDustDensity();
+    // d = read_dust_density();
 
-    digitalWrite(LED, HIGH);
+    // digitalWrite(LED, HIGH);
 
     Serial.print(F(" Humidity: "));
     Serial.print(h);
@@ -84,7 +84,7 @@ void loop()
         WiFiClient client;
         HTTPClient http;
 
-        http.begin(client, "http://192.168.1.39:8077");
+        http.begin(client, "http://aqms.shortbread.io:8077/report");
         http.addHeader("Content-Type", "application/json");
         int httpResponseCode = http.POST(build_response_body());
 
