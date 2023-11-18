@@ -5,9 +5,10 @@ import tinytuya
 
 
 local_key = os.environ["TUYA_LOCAL_KEY"]
+address = os.environ["TUYA_DEVICE_ADDRESS"] # IP address of the device
 d = tinytuya.OutletDevice(
     dev_id="eb48d3aaf9a6bae052ceiy",
-    address="172.16.1.4",
+    address=address,
     local_key=local_key,
     version=3.4,
 )
