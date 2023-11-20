@@ -7,6 +7,7 @@
 
 #include "LGFX.h"
 #include "Model.h"
+#include "Storage.h"
 
 // SPI
 #define SPI_MOSI 2 // 1
@@ -31,6 +32,9 @@ ELM327 elm327;
 bool opened = false;
 
 bool config_loaded = false;
+char *log_file_prefix = "/logs/log_";
+int log_file_seq = 0;
+char log_file_path[128];
 char *wifi_ssid = "V-LINK";
 char *wifi_password = "";
 char *elm327_host = "192.168.0.10";
@@ -38,161 +42,17 @@ ushort elm327_port = 35000;
 
 char message[128];
 
-void listDir(fs::FS &fs, const char *dirname, uint8_t levels)
+void determine_log_file_path()
 {
-  Serial.printf("Listing directory: %s\n", dirname);
-
-  File root = fs.open(dirname);
-  if (!root)
+  do
   {
-    Serial.println("Failed to open directory");
-    return;
+    sprintf(log_file_path, "%s%d.txt", log_file_prefix, log_file_seq++);
   }
-  if (!root.isDirectory())
-  {
-    Serial.println("Not a directory");
-    return;
-  }
-
-  File file = root.openNextFile();
-  while (file)
-  {
-    if (file.isDirectory())
-    {
-      Serial.print("  DIR : ");
-      Serial.println(file.name());
-      if (levels)
-      {
-        listDir(fs, file.name(), levels - 1);
-      }
-    }
-    else
-    {
-      Serial.print("  FILE: ");
-      Serial.print(file.name());
-      Serial.print("  SIZE: ");
-      Serial.println(file.size());
-    }
-    file = root.openNextFile();
-  }
-}
-
-void createDir(fs::FS &fs, const char *path)
-{
-  Serial.printf("Creating Dir: %s\n", path);
-  if (fs.mkdir(path))
-  {
-    Serial.println("Dir created");
-  }
-  else
-  {
-    Serial.println("mkdir failed");
-  }
-}
-
-void removeDir(fs::FS &fs, const char *path)
-{
-  Serial.printf("Removing Dir: %s\n", path);
-  if (fs.rmdir(path))
-  {
-    Serial.println("Dir removed");
-  }
-  else
-  {
-    Serial.println("rmdir failed");
-  }
-}
-
-void readFile(fs::FS &fs, const char *path)
-{
-  Serial.printf("Reading file: %s\n", path);
-
-  File file = fs.open(path);
-  if (!file)
-  {
-    Serial.println("Failed to open file for reading");
-    return;
-  }
-
-  Serial.print("Read from file: ");
-  while (file.available())
-  {
-    Serial.write(file.read());
-  }
-  file.close();
-}
-
-void writeFile(fs::FS &fs, const char *path, const char *message)
-{
-  Serial.printf("Writing file: %s\n", path);
-
-  File file = fs.open(path, FILE_WRITE);
-  if (!file)
-  {
-    Serial.println("Failed to open file for writing");
-    return;
-  }
-  if (file.print(message))
-  {
-    Serial.println("File written");
-  }
-  else
-  {
-    Serial.println("Write failed");
-  }
-  file.close();
-}
-
-void appendFile(fs::FS &fs, const char *path, const char *message)
-{
-  Serial.printf("Appending to file: %s\n", path);
-
-  File file = fs.open(path, FILE_APPEND);
-  if (!file)
-  {
-    Serial.println("Failed to open file for appending");
-    return;
-  }
-  if (file.print(message))
-  {
-    Serial.println("Message appended");
-  }
-  else
-  {
-    Serial.println("Append failed");
-  }
-  file.close();
-}
-
-void renameFile(fs::FS &fs, const char *path1, const char *path2)
-{
-  Serial.printf("Renaming file %s to %s\n", path1, path2);
-  if (fs.rename(path1, path2))
-  {
-    Serial.println("File renamed");
-  }
-  else
-  {
-    Serial.println("Rename failed");
-  }
-}
-
-void deleteFile(fs::FS &fs, const char *path)
-{
-  Serial.printf("Deleting file: %s\n", path);
-  if (fs.remove(path))
-  {
-    Serial.println("File deleted");
-  }
-  else
-  {
-    Serial.println("Delete failed");
-  }
+  while (SD.exists(log_file_path));
 }
 
 void setup()
 {
-
   pinMode(SD_CS, OUTPUT);
   pinMode(SPI_SCK, OUTPUT);
   pinMode(SPI_MOSI, OUTPUT);
@@ -233,7 +93,7 @@ void setup()
     return;
   }
 
-  tft.print("SD Card Type: ");
+  tft.print("SD card type: ");
   if (cardType == CARD_MMC)
   {
     tft.println("MMC");
@@ -328,6 +188,9 @@ void setup()
     return;
   }
   elm327.begin(client, true, 2000, ISO_15765_11_BIT_500_KBAUD);
+
+  createDir(SD, "/logs");
+  determine_log_file_path();
 
   delay(1000);
   tft.fillScreen(TFT_BLACK);
@@ -441,5 +304,8 @@ void loop()
   {
     refresh_view();
     last_time = now;
+
+    sprintf(message, "%d,%d,%d,%f,%f\n", now, model.get_rpm(), model.get_kph(), model.get_oil_temp(), model.get_throttle());
+    appendFile(SD, log_file_path, message);
   }
 }
