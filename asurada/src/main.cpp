@@ -3,7 +3,6 @@
 #include <SDConfig.h>
 #include <WiFiClient.h>
 #include <WiFi.h>
-#include <ESPmDNS.h>
 #include <ELMduino.h>
 
 #include "LGFX.h"
@@ -27,7 +26,6 @@ const char *config_file = "/config.cfg";
 
 LGFX tft;
 SDConfig cfg;
-File root;
 WiFiClient client;
 ELM327 elm327;
 bool opened = false;
