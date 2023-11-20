@@ -350,25 +350,19 @@ const uint32_t refresh_threshold = 100; // in milliseconds
 
 void refresh_view()
 {
-  char buf[128];
+  tft.fillRect(10, 10, 150, 210, TFT_BLACK);
 
-  tft.fillRect(10, 10, 240, 210, TFT_BLACK);
-
-  sprintf(buf, "%d km/h", model.get_kph());
   tft.setCursor(10, 10);
-  tft.print(buf);
+  tft.printf("%4d km/h", model.get_kph());
 
-  sprintf(buf, "%d rpm", model.get_rpm());
   tft.setCursor(10, 60);
-  tft.print(buf);
+  tft.printf("%4d rpm", model.get_rpm());
 
-  sprintf(buf, "%.1f C", model.get_oil_temp());
   tft.setCursor(10, 110);
-  tft.print(buf);
+  tft.printf("%5.1fC", model.get_oil_temp());
 
-  sprintf(buf, "%.0f%%", model.get_throttle());
   tft.setCursor(10, 160);
-  tft.print(buf);
+  tft.printf("%5.0f%%", model.get_throttle());
 }
 
 void update_model()
