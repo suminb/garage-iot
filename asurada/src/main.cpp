@@ -51,7 +51,7 @@ void determine_log_file_path()
   while (SD.exists(log_file_path));
 }
 
-void setup()
+void init_pins()
 {
   pinMode(SD_CS, OUTPUT);
   pinMode(SPI_SCK, OUTPUT);
@@ -65,6 +65,11 @@ void setup()
 
   digitalWrite(LCD_CS, LOW);
   digitalWrite(LCD_BLK, HIGH);
+}
+
+void setup()
+{
+  init_pins();
 
   Serial.begin(115200);
   delay(100);
