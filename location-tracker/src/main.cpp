@@ -46,8 +46,8 @@ static const unsigned char PROGMEM logo_bmp[] =
 */
 // static const int RXPin = 4; // D1
 // static const int TXPin = 5; // D2
-static const int RXPin = 14; // D5
-static const int TXPin = 12; // D6
+static const uint8_t RXPin = GPIO_ID_PIN(3);
+static const uint8_t TXPin = GPIO_ID_PIN(1);
 static const uint32_t GPSBaud = 9600;
 
 // The TinyGPS++ object
@@ -70,8 +70,8 @@ SoftwareSerial ss(RXPin, TXPin);
    won't get any output from this program.
 */
 
-TinyGPSCustom pdop(gps, "GNGLL", 1); // $GPGSA sentence, 15th element
-TinyGPSCustom hdop(gps, "GNGLL", 3); // $GPGSA sentence, 16th element
+// TinyGPSCustom pdop(gps, "GNGLL", 1); // $GPGSA sentence, 15th element
+// TinyGPSCustom hdop(gps, "GNGLL", 3); // $GPGSA sentence, 16th element
 
 void setup()
 {
