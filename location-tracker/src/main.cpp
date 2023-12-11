@@ -247,18 +247,30 @@ void loop()
         Serial.println();
 
         // After successful positioning, the PMU charging indicator flashes quickly
-        PMU.setChargingLedMode(XPOWERS_CHG_LED_BLINK_4HZ);
+        // PMU.setChargingLedMode(XPOWERS_CHG_LED_BLINK_4HZ);
         sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d, %f, %f, %f, %f, %f, %d, %d\n",
             year2, month2, day2, hour2, min2, sec2, lat2, lon2, alt2, accuracy2, speed2, vsat2, usat2);
-        appendFile(SD_MMC, "/records.csv", buf);
+        appendFile(SD_MMC, "/locations.csv", buf);
 
-        delay(100);
+        PMU.setChargingLedMode(XPOWERS_CHG_LED_ON);
+        delay(150);
+        PMU.setChargingLedMode(XPOWERS_CHG_LED_OFF);
     }
     else
     {
         // Blinking PMU charging indicator
-        PMU.setChargingLedMode(level ? XPOWERS_CHG_LED_ON : XPOWERS_CHG_LED_OFF);
-        level ^= 1;
+        // PMU.setChargingLedMode(level ? XPOWERS_CHG_LED_ON : XPOWERS_CHG_LED_OFF);
+        // level ^= 1;
+        for (int i = 0; i < 2; i++)
+        {
+            PMU.setChargingLedMode(XPOWERS_CHG_LED_ON);
+            delay(100);
+            PMU.setChargingLedMode(XPOWERS_CHG_LED_OFF);
+            delay(100);
+        }
+        PMU.setChargingLedMode(XPOWERS_CHG_LED_OFF);
         delay(1000);
     }
+
+    Serial.printf("Battery = %d (%d)\n", PMU.getBatteryPercent(), PMU.getBattVoltage());
 }
