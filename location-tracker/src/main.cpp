@@ -221,7 +221,7 @@ void setup()
 
     //GNSS Work Mode Set GPS+BEIDOU
     Serial.println("Requesting GNSS...");
-    modem.sendAT("+CGNSMOD=1,0,1,0,0");
+    modem.sendAT("+CGNSMOD=1,1,0,0,0");
     resp = modem.waitResponse();
     Serial.printf("Response from modem = %d\n", resp);
 
@@ -255,7 +255,7 @@ void setup()
     // GPS function needs to be enabled for the first use
     Serial.println("Enabling GPS...");
     if (!modem.enableGPS()) {
-        Serial.print("Modem enable GPS function failed!!");
+        Serial.println("Failed to enable GPS");
 
         while (true)
         {
@@ -326,6 +326,27 @@ String wifi_encryption_type_as_str(wifi_auth_mode_t mode)
     return mode_str;
 }
 
+/**
+ * @brief Append a single WiFi scan record to a file
+ * 
+ * @param filename 
+ * @param ssid 
+ * @param mac_addr 
+ * @param auth_mode 
+ * @param channel 
+ * @param rssi 
+ */
+void record_wifi_scan_result(const char* filename, const char* ssid, const char* mac_addr, wifi_auth_mode_t auth_mode, int32_t channel, int32_t rssi)
+{
+    char buf[1024];
+
+    sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d, \"%s\", %s, %s, %d, %d, %f, %f, %f\n",
+        year2, month2, day2, hour2, min2, sec2,
+        ssid, mac_addr, wifi_encryption_type_as_str(auth_mode).c_str(), channel, rssi, lat2, lon2, alt2);
+    Serial.print(buf);
+    appendFile(SD_MMC, filename, buf);
+}
+
 void scan_wifi()
 {
     int16_t n = WiFi.scanComplete();
@@ -338,14 +359,13 @@ void scan_wifi()
     {
         for (uint16_t i = 0; i < n; i++)
         {
-            Serial.printf("SSID(%d) = %s, %s, %s, %d, %d\n",
-                i,
-                WiFi.SSID(i).c_str(),
-                WiFi.BSSIDstr(i).c_str(),
-                wifi_encryption_type_as_str(WiFi.encryptionType(i)).c_str(),
-                WiFi.channel(i),
-                WiFi.RSSI(i)
-            );
+            const char* ssid = WiFi.SSID(i).c_str();
+            const char* mac_addr = WiFi.BSSIDstr(i).c_str();
+            const wifi_auth_mode_t auth_mode = WiFi.encryptionType(i);
+            const int32_t channel = WiFi.channel(i);
+            const int32_t rssi = WiFi.RSSI(i);
+
+            record_wifi_scan_result("/wifiscan.csv", ssid, mac_addr, auth_mode, channel, rssi);
         }
         WiFi.scanNetworks(true);
     }
