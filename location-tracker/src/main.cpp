@@ -248,14 +248,16 @@ void setup()
     Serial.printf("Response from modem = %d\n", resp);
 #endif
     init_wifi();
-    delay(1000);
+    // Initiate WiFi scan asynchronoulsy
+    WiFi.scanNetworks(true);
+    delay(500);
 
     // GPS function needs to be enabled for the first use
     Serial.println("Enabling GPS...");
     if (!modem.enableGPS()) {
         Serial.print("Modem enable GPS function failed!!");
 
-        while (1)
+        while (true)
         {
             PMU.setChargingLedMode(XPOWERS_CHG_LED_ON);
             delay(300);
@@ -324,13 +326,33 @@ String wifi_encryption_type_as_str(wifi_auth_mode_t mode)
     return mode_str;
 }
 
+void scan_wifi()
+{
+    int16_t n = WiFi.scanComplete();
+    Serial.printf("WiFi scan result, n = %d\n", n);
+    if (n == WIFI_SCAN_FAILED)
+    {
+        WiFi.scanNetworks(true);
+    }
+    else if (n > 0)
+    {
+        for (uint16_t i = 0; i < n; i++)
+        {
+            Serial.printf("SSID(%d) = %s, %s, %s, %d, %d\n",
+                i,
+                WiFi.SSID(i).c_str(),
+                WiFi.BSSIDstr(i).c_str(),
+                wifi_encryption_type_as_str(WiFi.encryptionType(i)).c_str(),
+                WiFi.channel(i),
+                WiFi.RSSI(i)
+            );
+        }
+        WiFi.scanNetworks(true);
+    }
+}
+
 void loop()
 {
-    // modem.sendAT("+SGNSCMD=1,0");
-    // uint8_t resp = modem.waitResponse();
-    // Serial.printf("Response from modem = %d\n", resp);
-    // delay(1000);
-
     char buf[1024];
 
     if (modem.getGPS(&lat2, &lon2, &speed2, &alt2, &vsat2, &usat2, &accuracy2,
@@ -375,27 +397,6 @@ void loop()
         delay(1000);
     }
 
-    int16_t n = WiFi.scanComplete();
-    Serial.printf("wifi scan complete, n = %d\n", n);
-    if (n == WIFI_SCAN_FAILED)
-    {
-        WiFi.scanNetworks(true);
-    }
-    else if (n > 0)
-    {
-        for (uint16_t i = 0; i < n; i++)
-        {
-            Serial.printf("SSID(%d) = %s, %s, %s, %d, %d\n",
-                i,
-                WiFi.SSID(i).c_str(),
-                WiFi.BSSIDstr(i).c_str(),
-                wifi_encryption_type_as_str(WiFi.encryptionType(i)).c_str(),
-                WiFi.channel(i),
-                WiFi.RSSI(i)
-            );
-        }
-        WiFi.scanNetworks(true);
-    }
-
+    scan_wifi();
     Serial.printf("Battery = %d (%d)\n", PMU.getBatteryPercent(), PMU.getBattVoltage());
 }
