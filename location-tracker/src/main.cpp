@@ -9,6 +9,7 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <SD_MMC.h>
+#include <WiFi.h>
 #define XPOWERS_CHIP_AXP2101
 #include "XPowersLib.h"
 #include "Storage.h"
@@ -48,6 +49,32 @@ int   hour2     = 0;
 int   min2      = 0;
 int   sec2      = 0;
 bool  level     = false;
+
+
+void init_wifi()
+{
+    const char wifi_ssid[] = "FBI Undercover Van";
+    const char wifi_password[] = "";
+    const uint8_t wifi_max_retries = 5;
+    WiFi.begin(wifi_ssid, wifi_password);
+
+    uint8_t wifi_retry = 0;
+    while (WiFi.status() != WL_CONNECTED && wifi_retry++ < wifi_max_retries)
+    {
+        delay(250);
+        Serial.print(".");
+    }
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        Serial.printf("Connected to %s\n", wifi_ssid);
+    }
+    else
+    {
+        Serial.printf("Failed to connect to %s\n", wifi_ssid);
+        WiFi.mode(WIFI_STA);
+        WiFi.disconnect();
+    }
+}
 
 void setup()
 {
@@ -163,14 +190,21 @@ void setup()
      * step 3 : start modem gps function
     ***********************************/
 
+    uint8_t resp;
+
     //  When configuring GNSS, you need to stop GPS first
     modem.disableGPS();
     delay(500);
 
-#if 0
+    // Serial.println("Starting GPS hot");
+    // modem.sendAT("+CGNSHOT");
+    // uint8_t resp = modem.waitResponse();
+    // Serial.printf("Response from modem = %d\n", resp);
+
+#if 1
     /*
     ! GNSS Work Mode Set
-     <gps mode> GPS work mode.
+    <gps mode> GPS work mode.
         1 Start GPS NMEA out.
     <glo mode> GLONASS work mode.
         0 Stop GLONASS NMEA out.
@@ -186,9 +220,10 @@ void setup()
         1 Start QZSS NMEA out.*/
 
     //GNSS Work Mode Set GPS+BEIDOU
-    modem.sendAT("+CGNSMOD=1,1,0,0,0");
-    modem.waitResponse();
-
+    Serial.println("Requesting GNSS...");
+    modem.sendAT("+CGNSMOD=1,0,1,0,0");
+    resp = modem.waitResponse();
+    Serial.printf("Response from modem = %d\n", resp);
 
     /*
     GNSS Command,For more parameters, see <SIM7070_SIM7080_SIM7090 Series_AT Command Manual> 212 page.
@@ -197,37 +232,105 @@ void setup()
     <minDistance> range: 0-1000
      Minimum distance in meters that must be traversed between position reports. Setting this interval to 0 will be a pure time-based tracking/batching.
     <accuracy>:
-        0  Accuracy is not specified, use default.
-        1  Low Accuracy for location is acceptable.
+        0 Accuracy is not specified, use default.
+        1 Low Accuracy for location is acceptable.
         2 Medium Accuracy for location is acceptable.
         3 Only High Accuracy for location is acceptable.
     */
     // minInterval = 1000,minDistance = 0,accuracy = 0
-    modem.sendAT("+SGNSCMD=2,1000,0,0");
-    modem.waitResponse();
+    modem.sendAT("+SGNSCMD=2,1000,0,1");
+    resp = modem.waitResponse();
+    Serial.printf("Response from modem = %d\n", resp);
 
     // Turn off GNSS.
     modem.sendAT("+SGNSCMD=0");
-    modem.waitResponse();
+    resp = modem.waitResponse();
+    Serial.printf("Response from modem = %d\n", resp);
 #endif
-    delay(500);
+    init_wifi();
+    delay(1000);
 
     // GPS function needs to be enabled for the first use
+    Serial.println("Enabling GPS...");
     if (!modem.enableGPS()) {
-        Serial.print("Modem enable gps function failed!!");
+        Serial.print("Modem enable GPS function failed!!");
 
         while (1)
         {
             PMU.setChargingLedMode(XPOWERS_CHG_LED_ON);
-            delay(250);
+            delay(300);
+            PMU.setChargingLedMode(XPOWERS_CHG_LED_OFF);
+            delay(200);
+            PMU.setChargingLedMode(XPOWERS_CHG_LED_ON);
+            delay(100);
             PMU.setChargingLedMode(XPOWERS_CHG_LED_OFF);
             delay(1000);
         }
     }
+
+    Serial.println("Requesting current GSM location");
+    if (modem.getGsmLocation(&lat2, &lon2, &accuracy2, &year2, &month2, &day2, &hour2,
+                             &min2, &sec2))
+    {
+        Serial.printf("Latitude: %f\tLongitude: %f\n", lat2, lon2);
+        Serial.printf("Accuracy: %f\n", accuracy2);
+        Serial.printf("Year: %d\tMonth: %d\tDay: %d\n", year2, month2, day2);
+        Serial.printf("Hour: %d\tMinute: %d\tSecond: %d\n", hour2, min2, sec2);
+    }
+    else
+    {
+        Serial.println("Couldn't get GSM location.");
+    }
+}
+
+String wifi_encryption_type_as_str(wifi_auth_mode_t mode)
+{
+    String mode_str;
+    switch (mode)
+    {
+        case WIFI_AUTH_OPEN:
+            mode_str = "OPEN";
+            break;
+        case WIFI_AUTH_WEP:
+            mode_str = "WEP";
+            break;
+        case WIFI_AUTH_WPA_PSK:
+            mode_str = "WPA_PSK";
+            break;
+        case WIFI_AUTH_WPA2_PSK:
+            mode_str = "WPA2_PSK";
+            break;
+        case WIFI_AUTH_WPA_WPA2_PSK:
+            mode_str = "WPA_WPA2_PSK";
+            break;
+        case WIFI_AUTH_WPA2_ENTERPRISE:
+            mode_str = "WPA2_ENTERPRISE";
+            break;
+        case WIFI_AUTH_WPA3_PSK:
+            mode_str = "WPA3_PSK";
+            break;
+        case WIFI_AUTH_WPA2_WPA3_PSK:
+            mode_str = "WPA2_WPA3_PSK";
+            break;
+        case WIFI_AUTH_WAPI_PSK:
+            mode_str = "WAPI_PSK";
+            break;
+        case WIFI_AUTH_MAX:
+            mode_str = "MAX";
+            break;
+        default:
+            mode_str = "UNKNOWN";
+    }
+    return mode_str;
 }
 
 void loop()
 {
+    // modem.sendAT("+SGNSCMD=1,0");
+    // uint8_t resp = modem.waitResponse();
+    // Serial.printf("Response from modem = %d\n", resp);
+    // delay(1000);
+
     char buf[1024];
 
     if (modem.getGPS(&lat2, &lon2, &speed2, &alt2, &vsat2, &usat2, &accuracy2,
@@ -270,6 +373,28 @@ void loop()
         }
         PMU.setChargingLedMode(XPOWERS_CHG_LED_OFF);
         delay(1000);
+    }
+
+    int16_t n = WiFi.scanComplete();
+    Serial.printf("wifi scan complete, n = %d\n", n);
+    if (n == WIFI_SCAN_FAILED)
+    {
+        WiFi.scanNetworks(true);
+    }
+    else if (n > 0)
+    {
+        for (uint16_t i = 0; i < n; i++)
+        {
+            Serial.printf("SSID(%d) = %s, %s, %s, %d, %d\n",
+                i,
+                WiFi.SSID(i).c_str(),
+                WiFi.BSSIDstr(i).c_str(),
+                wifi_encryption_type_as_str(WiFi.encryptionType(i)).c_str(),
+                WiFi.channel(i),
+                WiFi.RSSI(i)
+            );
+        }
+        WiFi.scanNetworks(true);
     }
 
     Serial.printf("Battery = %d (%d)\n", PMU.getBatteryPercent(), PMU.getBattVoltage());
