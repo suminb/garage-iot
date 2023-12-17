@@ -13,6 +13,7 @@
 #define XPOWERS_CHIP_AXP2101
 #include "XPowersLib.h"
 #include "Storage.h"
+#include "_Server.h"
 #include "utilities.h"
 
 XPowersPMU  PMU;
@@ -41,6 +42,9 @@ TinyGsm        modem(SerialAT);
 // Define the serial console for debug prints, if needed
 #define TINY_GSM_DEBUG SerialMon
 
+const char wifi_ssid[] = "FBI Undercover Van";
+const char wifi_password[] = "";
+const uint8_t wifi_max_retries = 10;
 
 float lat2      = 0;
 float lon2      = 0;
@@ -60,9 +64,6 @@ bool  level     = false;
 
 void init_wifi()
 {
-    const char wifi_ssid[] = "FBI Undercover Van";
-    const char wifi_password[] = "";
-    const uint8_t wifi_max_retries = 5;
     WiFi.begin(wifi_ssid, wifi_password);
 
     uint8_t wifi_retry = 0;
@@ -339,6 +340,14 @@ void setup()
     Serial.printf("Response from modem = %d\n", resp);
 #endif
     init_wifi();
+    if (WiFi.isConnected())
+    {
+        init_web_server();
+    }
+    else
+    {
+        Serial.println("WiFi not connected, and thus web server not started");
+    }
     // Initiate WiFi scan asynchronoulsy
     WiFi.scanNetworks(true);
     delay(500);
@@ -433,10 +442,10 @@ void record_wifi_scan_result(const char* filename, const String ssid, const Stri
 {
     char buf[1024];
 
-    sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d, \"%s\", %s, %s, %d, %d, %f, %f, %f\n",
+    sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d, \"%s\", %s, %s, %d, %d, %f, %f, %f, %f\n",
         year2, month2, day2, hour2, min2, sec2,
         ssid.c_str(), mac_addr.c_str(), wifi_encryption_type_as_str(auth_mode).c_str(), channel, rssi,
-        lat2, lon2, alt2);
+        lat2, lon2, alt2, accuracy2);
     Serial.print(buf);
     appendFile(SD_MMC, filename, buf);
 }
@@ -517,4 +526,6 @@ void loop()
     track_location();
     scan_wifi();
     Serial.printf("Battery = %d (%d)\n", PMU.getBatteryPercent(), PMU.getBattVoltage());
+
+    handle_web_client();
 }
