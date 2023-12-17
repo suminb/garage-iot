@@ -35,6 +35,13 @@ TinyGsm        modem(debugger);
 TinyGsm        modem(SerialAT);
 #endif
 
+// Set serial for debug console (to the Serial Monitor, default speed 115200)
+#define SerialMon Serial
+
+// Define the serial console for debug prints, if needed
+#define TINY_GSM_DEBUG SerialMon
+
+
 float lat2      = 0;
 float lon2      = 0;
 float speed2    = 0;
@@ -74,6 +81,90 @@ void init_wifi()
         WiFi.mode(WIFI_STA);
         WiFi.disconnect();
     }
+}
+
+const char apn[] = "lte.ktfwing.com";
+const char gprsUser[] = "";
+const char gprsPass[] = "";
+
+void init_sim()
+{
+    String res;
+
+    Serial.println("========SIMCOMATI======");
+    modem.sendAT("+SIMCOMATI");
+    modem.waitResponse(1000L, res);
+    res.replace(GSM_NL "OK" GSM_NL, "");
+    Serial.println(res);
+    res = "";
+    Serial.println("=======================");
+
+    Serial.println("=====Preferred mode selection=====");
+    modem.sendAT("+CNMP?");
+    if (modem.waitResponse(1000L, res) == 1)
+    {
+        res.replace(GSM_NL "OK" GSM_NL, "");
+        Serial.println(res);
+    }
+    res = "";
+    Serial.println("=======================");
+
+    Serial.println("=====Preferred selection between CAT-M and NB-IoT=====");
+    modem.sendAT("+CMNB?");
+    if (modem.waitResponse(1000L, res) == 1)
+    {
+        res.replace(GSM_NL "OK" GSM_NL, "");
+        Serial.println(res);
+    }
+    res = "";
+    Serial.println("=======================");
+
+    // automatic mode
+    // modem.setNetworkMode(2);
+
+    // The XBee must run the gprsConnect function BEFORE waiting for network!
+    modem.gprsConnect(apn, gprsUser, gprsPass);
+
+    Serial.println("Waiting for network...");
+    if (!modem.waitForNetwork(300000L, false))
+    {
+        Serial.println("Network not ready");
+        return;
+    }
+
+    if (modem.isNetworkConnected())
+    {
+        Serial.println("Network connected");
+    }
+
+    Serial.printf("Connecting to %s\n", apn);
+    if (!modem.gprsConnect(apn, gprsUser, gprsPass))
+    {
+        Serial.printf("Failed to connect to %s\n", apn);
+        return;
+    }
+
+    bool connected = modem.isGprsConnected();
+    Serial.printf("GPRS status: %s\n", connected ? "connected" : "not connected");
+
+    String ccid = modem.getSimCCID();
+    Serial.printf("CCID: %s\n", ccid.c_str());
+
+    String imei = modem.getIMEI();
+    Serial.printf("IMEI: %s\n", imei.c_str());
+
+    String imsi = modem.getIMSI();
+    Serial.printf("IMSI: %s\n", imsi.c_str());
+
+    String cop = modem.getOperator();
+    Serial.printf("Operator: %s\n", cop.c_str());
+
+    IPAddress local = modem.localIP();
+    Serial.print("Local IP:");
+    Serial.println(local);
+
+    int csq = modem.getSignalQuality();
+    Serial.printf("Signal quality: %d\n", csq);
 }
 
 void setup()
@@ -252,6 +343,8 @@ void setup()
     WiFi.scanNetworks(true);
     delay(500);
 
+    // init_sim();
+
     // GPS function needs to be enabled for the first use
     Serial.println("Enabling GPS...");
     if (!modem.enableGPS()) {
@@ -270,19 +363,19 @@ void setup()
         }
     }
 
-    Serial.println("Requesting current GSM location");
-    if (modem.getGsmLocation(&lat2, &lon2, &accuracy2, &year2, &month2, &day2, &hour2,
-                             &min2, &sec2))
-    {
-        Serial.printf("Latitude: %f\tLongitude: %f\n", lat2, lon2);
-        Serial.printf("Accuracy: %f\n", accuracy2);
-        Serial.printf("Year: %d\tMonth: %d\tDay: %d\n", year2, month2, day2);
-        Serial.printf("Hour: %d\tMinute: %d\tSecond: %d\n", hour2, min2, sec2);
-    }
-    else
-    {
-        Serial.println("Couldn't get GSM location.");
-    }
+    // Serial.println("Requesting current GSM location");
+    // if (modem.getGsmLocation(&lat2, &lon2, &accuracy2, &year2, &month2, &day2, &hour2,
+    //                          &min2, &sec2))
+    // {
+    //     Serial.printf("Latitude: %f\tLongitude: %f\n", lat2, lon2);
+    //     Serial.printf("Accuracy: %f\n", accuracy2);
+    //     Serial.printf("Year: %d\tMonth: %d\tDay: %d\n", year2, month2, day2);
+    //     Serial.printf("Hour: %d\tMinute: %d\tSecond: %d\n", hour2, min2, sec2);
+    // }
+    // else
+    // {
+    //     Serial.println("Couldn't get GSM location.");
+    // }
 }
 
 String wifi_encryption_type_as_str(wifi_auth_mode_t mode)
@@ -336,42 +429,19 @@ String wifi_encryption_type_as_str(wifi_auth_mode_t mode)
  * @param channel 
  * @param rssi 
  */
-void record_wifi_scan_result(const char* filename, const char* ssid, const char* mac_addr, wifi_auth_mode_t auth_mode, int32_t channel, int32_t rssi)
+void record_wifi_scan_result(const char* filename, const String ssid, const String mac_addr, wifi_auth_mode_t auth_mode, int32_t channel, int32_t rssi)
 {
     char buf[1024];
 
     sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d, \"%s\", %s, %s, %d, %d, %f, %f, %f\n",
         year2, month2, day2, hour2, min2, sec2,
-        ssid, mac_addr, wifi_encryption_type_as_str(auth_mode).c_str(), channel, rssi, lat2, lon2, alt2);
+        ssid.c_str(), mac_addr.c_str(), wifi_encryption_type_as_str(auth_mode).c_str(), channel, rssi,
+        lat2, lon2, alt2);
     Serial.print(buf);
     appendFile(SD_MMC, filename, buf);
 }
 
-void scan_wifi()
-{
-    int16_t n = WiFi.scanComplete();
-    Serial.printf("WiFi scan result, n = %d\n", n);
-    if (n == WIFI_SCAN_FAILED)
-    {
-        WiFi.scanNetworks(true);
-    }
-    else if (n > 0)
-    {
-        for (uint16_t i = 0; i < n; i++)
-        {
-            const char* ssid = WiFi.SSID(i).c_str();
-            const char* mac_addr = WiFi.BSSIDstr(i).c_str();
-            const wifi_auth_mode_t auth_mode = WiFi.encryptionType(i);
-            const int32_t channel = WiFi.channel(i);
-            const int32_t rssi = WiFi.RSSI(i);
-
-            record_wifi_scan_result("/wifiscan.csv", ssid, mac_addr, auth_mode, channel, rssi);
-        }
-        WiFi.scanNetworks(true);
-    }
-}
-
-void loop()
+void track_location()
 {
     char buf[1024];
 
@@ -416,7 +486,35 @@ void loop()
         PMU.setChargingLedMode(XPOWERS_CHG_LED_OFF);
         delay(1000);
     }
+}
 
+void scan_wifi()
+{
+    int16_t n = WiFi.scanComplete();
+    Serial.printf("WiFi scan result, n = %d\n", n);
+    if (n == WIFI_SCAN_FAILED)
+    {
+        WiFi.scanNetworks(true);
+    }
+    else if (n > 0)
+    {
+        for (uint16_t i = 0; i < n; i++)
+        {
+            const String ssid = WiFi.SSID(i);
+            const String mac_addr = WiFi.BSSIDstr(i);
+            const wifi_auth_mode_t auth_mode = WiFi.encryptionType(i);
+            const int32_t channel = WiFi.channel(i);
+            const int32_t rssi = WiFi.RSSI(i);
+
+            record_wifi_scan_result("/wifiscan.csv", ssid, mac_addr, auth_mode, channel, rssi);
+        }
+        WiFi.scanNetworks(true);
+    }
+}
+
+void loop()
+{
+    track_location();
     scan_wifi();
     Serial.printf("Battery = %d (%d)\n", PMU.getBatteryPercent(), PMU.getBattVoltage());
 }
