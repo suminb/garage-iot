@@ -12,6 +12,7 @@
 #include <WiFi.h>
 #define XPOWERS_CHIP_AXP2101
 #include "XPowersLib.h"
+#include "SDConfig.h"
 #include "Storage.h"
 #include "_Server.h"
 #include "utilities.h"
@@ -42,9 +43,9 @@ TinyGsm        modem(SerialAT);
 // Define the serial console for debug prints, if needed
 #define TINY_GSM_DEBUG SerialMon
 
-const char wifi_ssid[] = "FBI Undercover Van";
-const char wifi_password[] = "";
-const uint8_t wifi_max_retries = 10;
+char* wifi_ssid;
+char* wifi_password;
+uint8_t wifi_max_retries = 20;
 
 float lat2      = 0;
 float lon2      = 0;
@@ -61,6 +62,53 @@ int   min2      = 0;
 int   sec2      = 0;
 bool  level     = false;
 
+char config_file[] = "/default.cfg";
+
+boolean read_config()
+{
+    /*
+     * Length of the longest line expected in the config file.
+     * The larger this number, the more memory is used
+     * to read the file.
+     * You probably won't need to change this number.
+     */
+    int maxLineLength = 127;
+    SDConfig cfg;
+    File file = SD_MMC.open(config_file, FILE_READ);
+
+    // Open the configuration file.
+    if (!cfg.begin(file, maxLineLength))
+    {
+        Serial.print("Failed to open configuration file: ");
+        Serial.println(config_file);
+        return false;
+    }
+    // Read each setting from the file.
+    while (cfg.readNextSetting())
+    {
+        if (cfg.nameIs("wifi_ssid"))
+        {
+            wifi_ssid = cfg.copyValue();
+        }
+        else if (cfg.nameIs("wifi_password"))
+        {
+            wifi_password = cfg.copyValue();
+        }
+        else if (cfg.nameIs("wifi_max_retries"))
+        {
+            wifi_max_retries = cfg.getIntValue();
+        }
+        else
+        {
+            // report unrecognized names.
+            Serial.print("Unknown name in config: ");
+            Serial.println(cfg.getName());
+        }
+    }
+    // clean up
+    cfg.end();
+    return true;
+}
 
 void init_wifi()
 {
@@ -219,10 +267,9 @@ void setup()
 
     if (!SD_MMC.begin("/sdcard", true)) {
         Serial.println("Card Mount Failed");
-        while (1) {
+        while (true) {
             delay(1000);
         }
-
     }
 
     uint8_t cardType = SD_MMC.cardType();
@@ -246,6 +293,14 @@ void setup()
 
     uint64_t cardSize = SD_MMC.cardSize() / (1024 * 1024);
     Serial.printf("SD_MMC Card Size: %lluMB\n", cardSize);
+
+    if (!read_config())
+    {
+        Serial.println("Failed to read config");
+        while (true) {
+            delay(1000);
+        }
+    }
 
     /*********************************
      * step 2 : start modem
@@ -293,7 +348,7 @@ void setup()
     // uint8_t resp = modem.waitResponse();
     // Serial.printf("Response from modem = %d\n", resp);
 
-#if 1
+#if 0
     /*
     ! GNSS Work Mode Set
     <gps mode> GPS work mode.
