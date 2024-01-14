@@ -115,6 +115,12 @@ boolean read_config()
 
 void init_wifi()
 {
+    if (wifi_ssid == NULL || wifi_password == NULL)
+    {
+        Serial.println("WiFi SSID or password not set");
+        return;
+    }
+
     WiFi.begin(wifi_ssid, wifi_password);
 
     uint8_t wifi_retry = 0;
