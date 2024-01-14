@@ -62,7 +62,7 @@ int   min2      = 0;
 int   sec2      = 0;
 bool  level     = false;
 
-char config_file[] = "/default.cfg";
+char config_file_path[] = "/default.cfg";
 
 boolean read_config()
 {
@@ -74,13 +74,16 @@ boolean read_config()
      */
     int maxLineLength = 127;
     SDConfig cfg;
-    File file = SD_MMC.open(config_file, FILE_READ);
+    if (!SD_MMC.exists(config_file_path)) {
+        writeFile(SD_MMC, config_file_path, "");
+    }
+    File config_file = SD_MMC.open(config_file_path, FILE_READ);
 
     // Open the configuration file.
-    if (!cfg.begin(file, maxLineLength))
+    if (!cfg.begin(config_file, maxLineLength))
     {
         Serial.print("Failed to open configuration file: ");
-        Serial.println(config_file);
+        Serial.println(config_file_path);
         return false;
     }
     // Read each setting from the file.
