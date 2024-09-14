@@ -9,11 +9,6 @@
 
 #include "utilities.h"
 
-char config_file_path[] = "/default.cfg";
-char* wifi_ssid;
-char* wifi_password;
-uint8_t wifi_max_retries = 20;
-
 /*
  * Opens the given file on the SD card.
  * Returns true if successful, false if not.
@@ -295,7 +290,7 @@ boolean SDConfig::getBooleanValue() {
   return false;
 }
 
-boolean read_config()
+boolean SDConfig::read()
 {
     /*
      * Length of the longest line expected in the config file.
@@ -322,11 +317,13 @@ boolean read_config()
     {
         if (cfg.nameIs("wifi_ssid"))
         {
-            wifi_ssid = cfg.copyValue();
+            char* value = cfg.copyValue();
+            strncpy(wifi_ssid, value, strlen(value));
         }
         else if (cfg.nameIs("wifi_password"))
         {
-            wifi_password = cfg.copyValue();
+            char* value = cfg.copyValue();
+            strncpy(wifi_password, value, strlen(value));
         }
         else if (cfg.nameIs("wifi_max_retries"))
         {

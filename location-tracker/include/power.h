@@ -4,4 +4,4 @@
 #define XPOWERS_CHIP_AXP2101
 #include "XPowersLib.h"
 
-void init_pmu();
+void init_pmu(XPowersPMU* pmu);
