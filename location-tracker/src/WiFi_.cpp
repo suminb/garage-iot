@@ -30,7 +30,7 @@ void init_wifi(SDConfig& config)
     }
 }
 
-void scan_wifi()
+void scan_wifi(Location& location)
 {
     int16_t n = WiFi.scanComplete();
     Serial.printf("WiFi scan result, n = %d\n", n);
@@ -48,7 +48,7 @@ void scan_wifi()
             const int32_t channel = WiFi.channel(i);
             const int32_t rssi = WiFi.RSSI(i);
 
-            // record_wifi_scan_result("/wifiscan.csv", ssid, mac_addr, auth_mode, channel, rssi);
+            record_wifi_scan_result("/wifiscan2.csv", ssid, mac_addr, auth_mode, channel, rssi, location);
             // Serial.printf("Scanned: %s\n", ssid.c_str());
         }
         WiFi.scanNetworks(true);
@@ -108,7 +108,7 @@ String wifi_encryption_type_as_str(wifi_auth_mode_t mode)
  */
 void record_wifi_scan_result(const char* filename, const String ssid, const String mac_addr, wifi_auth_mode_t auth_mode, int32_t channel, int32_t rssi, Location& location)
 {
-    char buf[1024];
+    char buf[512];
 
     sprintf(buf, "%04d-%02d-%02d %02d:%02d:%02d, \"%s\", %s, %s, %d, %d, %f, %f, %f, %f\n",
         location.year, location.month, location.day, location.hour, location.min, location.sec,
