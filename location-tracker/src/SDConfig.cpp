@@ -7,6 +7,13 @@
  
 #include "SDConfig.h"
 
+#include "utilities.h"
+
+char config_file_path[] = "/default.cfg";
+char* wifi_ssid;
+char* wifi_password;
+uint8_t wifi_max_retries = 20;
+
 /*
  * Opens the given file on the SD card.
  * Returns true if successful, false if not.
@@ -286,4 +293,53 @@ boolean SDConfig::getBooleanValue() {
     return true;
   }
   return false;
+}
+
+boolean read_config()
+{
+    /*
+     * Length of the longest line expected in the config file.
+     * The larger this number, the more memory is used
+     * to read the file.
+     * You probably won't need to change this number.
+     */
+    int maxLineLength = 127;
+    SDConfig cfg;
+    if (!SD_MMC.exists(config_file_path)) {
+        writeFile(SD_MMC, config_file_path, "");
+    }
+    File config_file = SD_MMC.open(config_file_path, FILE_READ);
+
+    // Open the configuration file.
+    if (!cfg.begin(config_file, maxLineLength))
+    {
+        Serial.print("Failed to open configuration file: ");
+        Serial.println(config_file_path);
+        return false;
+    }
+    // Read each setting from the file.
+    while (cfg.readNextSetting())
+    {
+        if (cfg.nameIs("wifi_ssid"))
+        {
+            wifi_ssid = cfg.copyValue();
+        }
+        else if (cfg.nameIs("wifi_password"))
+        {
+            wifi_password = cfg.copyValue();
+        }
+        else if (cfg.nameIs("wifi_max_retries"))
+        {
+            wifi_max_retries = cfg.getIntValue();
+        }
+        else
+        {
+            // report unrecognized names.
+            Serial.print("Unknown name in config: ");
+            Serial.println(cfg.getName());
+        }
+    }
+    // clean up
+    cfg.end();
+    return true;
 }

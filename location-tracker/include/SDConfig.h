@@ -14,6 +14,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <Ethernet.h>
+#include "Storage.h"
 
 class SDConfig {
   private:
@@ -40,3 +41,6 @@ class SDConfig {
     char *copyValue();
 };
 #endif
+
+
+boolean read_config();
