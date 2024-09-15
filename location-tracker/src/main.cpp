@@ -28,6 +28,7 @@ void task1(void *pvParameters) {
 void task2(void *pvParameters) {
     // init_wifi(config);
     while (1) {
+        // Check if location has changed or enough time has elapsed
         scan_wifi(location);
         vTaskDelay(1000 / portTICK_PERIOD_MS); // Delay for 1000ms
     }

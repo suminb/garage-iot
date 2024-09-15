@@ -48,7 +48,7 @@ void scan_wifi(Location& location)
             const int32_t channel = WiFi.channel(i);
             const int32_t rssi = WiFi.RSSI(i);
 
-            record_wifi_scan_result("/wifiscan2.csv", ssid, mac_addr, auth_mode, channel, rssi, location);
+            record_wifi_scan_result("/wifiscan.csv", ssid, mac_addr, auth_mode, channel, rssi, location);
             // Serial.printf("Scanned: %s\n", ssid.c_str());
         }
         WiFi.scanNetworks(true);
