@@ -3,6 +3,9 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./location-tracker
     steps:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
@@ -16,16 +19,12 @@ jobs:
         with:
           sources: "include/**/*.h,src/**/*.cpp,test/**/*.cpp"
           style: Google
-        working-directory: location-tracker
       - uses: actions/setup-python@v4
         with:
           python-version: '3.9'
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
-        working-directory: location-tracker
       - name: Static Code Analysis
         run: pio check
-        working-directory: location-tracker
       - name: Build PlatformIO Project
         run: pio run
-        working-directory: location-tracker
