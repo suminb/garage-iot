@@ -15,7 +15,7 @@ Location location;
 
 
 // Task functions
-void task1(void *pvParameters) {
+void manage_location(void *params) {
     init_modem();
     enable_gps(&pmu);
     while(1) {
@@ -25,7 +25,7 @@ void task1(void *pvParameters) {
     }
 }
 
-void task2(void *pvParameters) {
+void manage_wifi(void *params) {
     // init_wifi(config);
     while (1) {
         // Check if location has changed or enough time has elapsed
@@ -58,8 +58,8 @@ void setup() {
     // appendFile(SD_MMC, "/test.txt", "This is a test");
 
     // Create tasks with increased stack size
-    xTaskCreate(task1, "task1", 4096, NULL, 1, NULL);
-    xTaskCreate(task2, "task2", 1024 * 10, NULL, 1, NULL);
+    xTaskCreate(manage_location, "manage_location", 4096, NULL, 1, NULL);
+    xTaskCreate(manage_wifi, "manage_wifi", 1024 * 10, NULL, 1, NULL);
 
 }
 
