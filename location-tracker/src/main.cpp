@@ -59,7 +59,7 @@ void setup() {
     // appendFile(SD_MMC, "/test.txt", "This is a test");
 
     // Create tasks with increased stack size
-    xTaskCreate(manage_location, "manage_location", 4096, NULL, 1, NULL);
+    xTaskCreate(manage_location, "manage_location", 1024 * 8, NULL, 1, NULL);
     xTaskCreate(manage_wifi, "manage_wifi", 1024 * 10, NULL, 1, NULL);
 
 }
