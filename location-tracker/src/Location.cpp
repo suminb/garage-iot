@@ -172,6 +172,5 @@ void track_location(XPowersPMU* pmu, Location* location)
             vTaskDelay(100 / portTICK_PERIOD_MS);
         }
         pmu->setChargingLedMode(XPOWERS_CHG_LED_OFF);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }

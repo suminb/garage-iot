@@ -21,7 +21,7 @@ void manage_location(void *params) {
     while (1) {
         Serial.println("Acquiring location...");
         track_location(&pmu, &location);
-        vTaskDelay(100 / portTICK_PERIOD_MS); // Delay for 10ms
+        vTaskDelay(1000 / portTICK_PERIOD_MS); // Delay for 10ms
     }
 }
 
