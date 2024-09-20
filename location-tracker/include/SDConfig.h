@@ -14,6 +14,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include <Ethernet.h>
+#include "Storage.h"
 
 class SDConfig {
   private:
@@ -26,6 +27,13 @@ class SDConfig {
     uint8_t _valueIndex;     // position in _line[] where the value starts
                            //  (or -1 if none)
                            // (the name part is at &_line[0])
+
+  public:
+    // These should probably be placed elsewhere...
+    char* config_file_path = "/default.cfg";
+    char wifi_ssid[256];
+    char wifi_password[256];
+    uint8_t wifi_max_retries = 20;
   
   public:
     boolean begin(const File& file, uint8_t maxLineLength);
@@ -38,5 +46,7 @@ class SDConfig {
     IPAddress getIPAddress();
     boolean getBooleanValue();
     char *copyValue();
+
+    boolean read();
 };
 #endif
