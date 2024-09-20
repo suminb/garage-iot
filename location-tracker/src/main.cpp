@@ -18,7 +18,7 @@ Location location;
 void manage_location(void *params) {
     init_modem();
     enable_gps(&pmu);
-    while(1) {
+    while (1) {
         Serial.println("Acquiring location...");
         track_location(&pmu, &location);
         vTaskDelay(100 / portTICK_PERIOD_MS); // Delay for 10ms
@@ -31,7 +31,7 @@ void manage_wifi(void *params) {
     while (1) {
         // Check if location has changed or enough time has elapsed
         scan_wifi(location);
-        vTaskDelay(1000 / portTICK_PERIOD_MS); // Delay for 1000ms
+        vTaskDelay(10000 / portTICK_PERIOD_MS); // Delay for 1000ms
     }
 }
 
