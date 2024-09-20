@@ -19,9 +19,9 @@ void init_modem() {
     pinMode(BOARD_MODEM_PWR_PIN, OUTPUT);
 
     digitalWrite(BOARD_MODEM_PWR_PIN, LOW);
-    delay(100);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
     digitalWrite(BOARD_MODEM_PWR_PIN, HIGH);
-    delay(1000);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
     digitalWrite(BOARD_MODEM_PWR_PIN, LOW);
 
     int retry = 0;
@@ -30,9 +30,9 @@ void init_modem() {
         if (retry++ > 15) {
             // Pull down PWRKEY for more than 1 second according to manual requirements
             digitalWrite(BOARD_MODEM_PWR_PIN, LOW);
-            delay(100);
+            vTaskDelay(100 / portTICK_PERIOD_MS);
             digitalWrite(BOARD_MODEM_PWR_PIN, HIGH);
-            delay(1000);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
             digitalWrite(BOARD_MODEM_PWR_PIN, LOW);
             retry = 0;
             Serial.println("Retry start modem .");
@@ -49,7 +49,7 @@ void init_modem() {
 
     //  When configuring GNSS, you need to stop GPS first
     modem.disableGPS();
-    delay(500);
+    vTaskDelay(500 / portTICK_PERIOD_MS);
 
     // Serial.println("Starting GPS hot");
     // modem.sendAT("+CGNSHOT");
@@ -113,13 +113,13 @@ void enable_gps(XPowersPMU* pmu) {
         while (true)
         {
             pmu->setChargingLedMode(XPOWERS_CHG_LED_ON);
-            delay(300);
+            vTaskDelay(300 / portTICK_PERIOD_MS);
             pmu->setChargingLedMode(XPOWERS_CHG_LED_OFF);
-            delay(200);
+            vTaskDelay(200 / portTICK_PERIOD_MS);
             pmu->setChargingLedMode(XPOWERS_CHG_LED_ON);
-            delay(100);
+            vTaskDelay(100 / portTICK_PERIOD_MS);
             pmu->setChargingLedMode(XPOWERS_CHG_LED_OFF);
-            delay(1000);
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
     }
 }
@@ -156,7 +156,7 @@ void track_location(XPowersPMU* pmu, Location* location)
         appendFile(SD_MMC, "/locations.csv", buf);
 
         pmu->setChargingLedMode(XPOWERS_CHG_LED_ON);
-        delay(150);
+        vTaskDelay(150 / portTICK_PERIOD_MS);
         pmu->setChargingLedMode(XPOWERS_CHG_LED_OFF);
     }
     else
@@ -167,11 +167,11 @@ void track_location(XPowersPMU* pmu, Location* location)
         for (int i = 0; i < 2; i++)
         {
             pmu->setChargingLedMode(XPOWERS_CHG_LED_ON);
-            delay(100);
+            vTaskDelay(100 / portTICK_PERIOD_MS);
             pmu->setChargingLedMode(XPOWERS_CHG_LED_OFF);
-            delay(100);
+            vTaskDelay(100 / portTICK_PERIOD_MS);
         }
         pmu->setChargingLedMode(XPOWERS_CHG_LED_OFF);
-        delay(1000);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }

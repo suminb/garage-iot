@@ -25,6 +25,7 @@ void manage_location(void *params) {
     }
 }
 
+// TODO: Set mutex for location object (and other shared objects)
 void manage_wifi(void *params) {
     // init_wifi(config);
     while (1) {
